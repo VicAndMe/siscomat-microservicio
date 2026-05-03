@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+PyMuPDF==1.27.2.2
+qrcode==8.2
+Pillow
+pydantic
+pytest==8.0.0
+httpx==0.26.0
