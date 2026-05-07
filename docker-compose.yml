@@ -11,3 +11,11 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
+    # para poder conectarse con el backend
+    networks: 
+      - siscomat_network
+
+# para poder conectarse con el backend
+networks:
+  siscomat_network:
+    external: true
