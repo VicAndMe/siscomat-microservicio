@@ -12,14 +12,14 @@ class RespuestaValidacionPlantilla(BaseModel):
 
 # --- MODELOS PARA PREVISUALIZACIÓN ---
 class PeticionPrevisualizacion(BaseModel):
-    nombre_curso: str = Field(..., example="Introducción a R (Prueba)")
-    nombre_participante: str = Field(..., example="Nombre Apellido de Prueba")
+    nombre_curso: str = Field(..., max_length=60, example="Introducción a R (Prueba)")
+    nombre_participante: str = Field(..., max_length=60, example="Nombre Apellido de Prueba")
     plantilla_base64: str = Field(..., description="PDF base codificado en Base64")
 
 # --- MODELOS PARA GENERACIÓN INDIVIDUAL (AL VUELO) ---
 class PeticionGeneracionIndividual(BaseModel):
-    nombre_curso: str = Field(..., example="Introducción a R")
-    nombre_participante: str = Field(..., example="Víctor Andrés Horta Félix")
+    nombre_curso: str = Field(..., max_length=60, example="Introducción a R")
+    nombre_participante: str = Field(..., max_length=60, example="Víctor Andrés Horta Félix")
     url_validacion: str = Field(..., example="https://siscomat.com/validar/XYZ123")
     plantilla_base64: str = Field(..., description="PDF base codificado en Base64")
 
