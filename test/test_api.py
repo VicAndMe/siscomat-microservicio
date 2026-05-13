@@ -1,10 +1,12 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 
 client = TestClient(app)
 
-HEADERS_VALIDOS = {"X-API-Key": "siscomat_token_seguro_2026"}
+API_KEY = os.environ.get("API_KEY_SECRETA")
+HEADERS_VALIDOS = {"X-API-Key": API_KEY}
 DUMMY_PDF_BASE64 = "JVBERi0xLjQKJcOkw7zDtsOfCjIgMCBvYmoKPDwvTGVuZ3RoIDMgMCBSL0ZpbHRlci9GbGF0ZURlY29kZT4+CnN0cmVhbQp4nDPQM1Qo5ypUMFAwALJMLU31jBQsTAz1LBSKUrnCtRTyuVJFHEpTizLT0xWcE0tSihhAgAEAAH8IygplbmRzdHJlYW0KZW5kb2JqCgozIDAgb2JqCjQxCmVuZG9iagoKNCAwIG9iago8PC9UeXBlL1BhZ2UvTWVkaWFCb3ggWzAgMCA1OTUuMjggODQxLjg5XS9QYXJlbnQgNSAwIFIvUmVzb3VyY2VzPDwvUHJvY1NldFsvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJXT4+L0NvbnRlbnRzIDIgMCBSPj4KZW5kb2JqCgo1IDAgb2JqCjw8L1R5cGUvUGFnZXMvS2lkc1s0IDAgUl0vQ291bnQgMT4+CmVuZG9iagoKMSAwIG9iago8PC9UeXBlL0NhdGFsb2cvUGFnZXMgNSAwIFI+PgplbmRvYmoKCjYgMCBvYmoKPDwvUHJvZHVjZXIoQ2FudmEpL0NyZWF0aW9uRGF0ZShEOjIwMjExMTE1MTgyMzEzKzAwJzAwJyk+PgplbmRvYmoKCnhyZWYKMCA3CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDI3MyAwMDAwMCBuIAowMDAwMDAwMDIyIDAwMDAwIG4gCjAwMDAwMDAxMjIgMDAwMDAgbiAKMDAwMDAwMDE0MiAwMDAwMCBuIAowMDAwMDAwMjE0IDAwMDAwIG4gCjAwMDAwMDAzMjAgMDAwMDAgbiAKdHJhaWxlcgo8PC9TaXplIDcvUm9vdCAxIDAgUi9JbmZvIDYgMCBSPj4Kc3RhcnR4cmVmCjQxMwolJUVPRgo="
 
 def test_health_check():
@@ -49,7 +51,7 @@ def test_generacion_individual_exito():
     """Prueba que la generación individual (el contrato que ya funciona en producción) siga intacto."""
     payload = {
         "nombre_curso": "Introducción a R",
-        "nombre_participante": "Víctor Andrés Horta Félix",
+        "nombre_participante": "JOSE JOSE JOSE JOSE",
         "url_validacion": "https://siscomat.com/validar/TEST01",
         "plantilla_base64": DUMMY_PDF_BASE64
     }

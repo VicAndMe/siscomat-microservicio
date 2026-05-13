@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, Depends, HTTPException, Security
 from fastapi.security.api_key import APIKeyHeader
 from app.schemas import (
@@ -13,7 +14,7 @@ app = FastAPI(
     version="2.0.0" # Subimos la versión por el cambio de arquitectura
 )
 
-API_KEY_SECRETA = "siscomat_token_seguro_2026"
+API_KEY_SECRETA = os.environ.get("API_KEY_SECRETA", "token_por_defecto_inseguro")
 header_scheme = APIKeyHeader(name="X-API-Key")
 
 def validar_api_key(api_key: str = Security(header_scheme)):
@@ -25,7 +26,7 @@ def validar_api_key(api_key: str = Security(header_scheme)):
 def health_check():
     return {"estado": "en linea", "servicio": "Generador de PDFs"}
 
-# --- ENDPOINT 1: VALIDAR PLANTILLA ---
+
 @app.post(
     "/api/v1/constancias/validar-plantilla", 
     response_model=RespuestaValidacionPlantilla,

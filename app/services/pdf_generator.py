@@ -11,26 +11,26 @@ def calcular_coordenadas_y_fuente_hoja(rect_placeholder, texto, ancho_pagina, fo
     """
     fontsize_calculado = base_fontsize
     
-    # Establecemos un margen de seguridad (ej. 60 puntos de cada lado) para que no toque los bordes
+    
     ancho_maximo_permitido = ancho_pagina - 120 
     
-    # Medimos cuánto mide el texto real con nuestro tamaño de letra ideal
+    
     ancho_texto = fitz.get_text_length(texto, fontname=fontname, fontsize=fontsize_calculado)
     
-    # Solo si el texto es más ancho que la hoja entera, lo encogemos proporcionalmente
+    
     if ancho_texto > ancho_maximo_permitido:
         fontsize_calculado = fontsize_calculado * (ancho_maximo_permitido / ancho_texto)
         ancho_texto = fitz.get_text_length(texto, fontname=fontname, fontsize=fontsize_calculado)
         
-    # Calculamos el punto central del placeholder original
+    
     centro_x = (rect_placeholder.x0 + rect_placeholder.x1) / 2.0
     inicio_x = centro_x - (ancho_texto / 2.0)
     
-    # Prevención por si el diseñador puso el placeholder muy pegado a la izquierda
+    
     if inicio_x < 60:
         inicio_x = 60
         
-    # Centrado vertical
+    
     centro_y = (rect_placeholder.y0 + rect_placeholder.y1) / 2.0
     inicio_y = centro_y + (fontsize_calculado / 3.0)
     
