@@ -6,13 +6,24 @@ PLACEHOLDERS_REQUERIDOS = ["{{NOMBRE COMPLETO PARTICIPANTE}}", "{{CURSO}}", "{{Q
 
 def calcular_coordenadas_y_fuente_hoja(rect_placeholder, texto, ancho_pagina, fontname="helv", base_fontsize=24):
     """
-    Calcula el tamaño de fuente y la posición para centrar el texto respecto al placeholder,
-    permitiendo que crezca a lo ancho de la hoja entera y no solo al ancho de la etiqueta.
+    Calcula dinámicamente el tamaño de la fuente y las coordenadas.
     """
     fontsize_calculado = base_fontsize
+    margen = 60 
     
     
-    ancho_maximo_permitido = ancho_pagina - 120 
+    centro_x = (rect_placeholder.x0 + rect_placeholder.x1) / 2.0
+    
+    
+    distancia_izq = centro_x - margen
+    distancia_der = (ancho_pagina - margen) - centro_x
+    
+    
+    distancia_izq = max(distancia_izq, 10)
+    distancia_der = max(distancia_der, 10)
+    
+    
+    ancho_maximo_permitido = 2 * min(distancia_izq, distancia_der)
     
     
     ancho_texto = fitz.get_text_length(texto, fontname=fontname, fontsize=fontsize_calculado)
@@ -23,13 +34,8 @@ def calcular_coordenadas_y_fuente_hoja(rect_placeholder, texto, ancho_pagina, fo
         ancho_texto = fitz.get_text_length(texto, fontname=fontname, fontsize=fontsize_calculado)
         
     
-    centro_x = (rect_placeholder.x0 + rect_placeholder.x1) / 2.0
     inicio_x = centro_x - (ancho_texto / 2.0)
     
-    
-    if inicio_x < 60:
-        inicio_x = 60
-        
     
     centro_y = (rect_placeholder.y0 + rect_placeholder.y1) / 2.0
     inicio_y = centro_y + (fontsize_calculado / 3.0)
