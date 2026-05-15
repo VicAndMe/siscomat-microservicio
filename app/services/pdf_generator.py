@@ -42,6 +42,42 @@ def calcular_coordenadas_y_fuente_hoja(rect_placeholder, texto, ancho_pagina, fo
     
     return fitz.Point(inicio_x, inicio_y), fontsize_calculado
 
+def calcular_rectangulo_qr_seguro(rect_placeholder, ancho_pagina, alto_pagina, tamano_ideal=100):
+    """
+    Calcula un rectángulo cuadrado perfecto centrado en el placeholder original.
+    Si está muy cerca de cualquier margen, reduce su tamaño proporcionalmente.
+    """
+    margen_seguridad = 60
+    
+    # 1. Encontrar el centro absoluto del placeholder
+    centro_x = (rect_placeholder.x0 + rect_placeholder.x1) / 2.0
+    centro_y = (rect_placeholder.y0 + rect_placeholder.y1) / 2.0
+    
+    # 2. Medir distancia a los bordes horizontales (Izquierda y Derecha)
+    distancia_izq = centro_x - margen_seguridad
+    distancia_der = (ancho_pagina - margen_seguridad) - centro_x
+    distancia_x_segura = min(distancia_izq, distancia_der)
+    
+    # 3. Medir distancia a los bordes verticales (Arriba y Abajo)
+    distancia_arriba = centro_y - margen_seguridad
+    distancia_abajo = (alto_pagina - margen_seguridad) - centro_y
+    distancia_y_segura = min(distancia_arriba, distancia_abajo)
+    
+    # 4. El tamaño máximo seguro es el doble de la distancia más restrictiva
+    tamano_maximo = max(2 * min(distancia_x_segura, distancia_y_segura), 20) # Mínimo 20x20
+    
+    # 5. Elegimos el tamaño final (ideal o el máximo permitido, el que sea menor)
+    tamano_final = min(tamano_ideal, tamano_maximo)
+    
+    # 6. Construir el nuevo rectángulo matemático perfectamente centrado
+    mitad = tamano_final / 2.0
+    return fitz.Rect(
+        centro_x - mitad,
+        centro_y - mitad,
+        centro_x + mitad,
+        centro_y + mitad
+    )
+
 def validar_plantilla(plantilla_bytes: bytes) -> dict:
     documento = fitz.open(stream=plantilla_bytes, filetype="pdf")
     pagina = documento[0]
@@ -98,15 +134,19 @@ def procesar_pdf(nombre: str, curso: str, url_validacion: str, plantilla_bytes: 
         punto_insercion, fontsize_dinamico = calcular_coordenadas_y_fuente_hoja(rect_curso, curso, ancho_pagina, base_fontsize=18)
         pagina.insert_text(punto_insercion, curso, fontsize=fontsize_dinamico, fontname="helv", color=(0, 0, 0))
 
-    # 5. Estampar el Código QR
+    # 5. Estampar el Código QR con protección geométrica
     coordenadas_qr = pagina.search_for("{{QR}}")
     if coordenadas_qr:
         rect_qr = coordenadas_qr[0]
+        # Borrar el texto de la etiqueta
         pagina.draw_rect(rect_qr, color=(1, 1, 1), fill=(1, 1, 1))
         
-        tamano_fijo_qr = 100
-        rect_cuadrado = fitz.Rect(rect_qr.x0, rect_qr.y0, rect_qr.x0 + tamano_fijo_qr, rect_qr.y0 + tamano_fijo_qr)
-        pagina.insert_image(rect_cuadrado, stream=bytes_qr)
+        # Calcular el rectángulo seguro y centrado
+        alto_pagina = pagina.rect.height
+        rect_cuadrado_seguro = calcular_rectangulo_qr_seguro(rect_qr, ancho_pagina, alto_pagina, tamano_ideal=100)
+        
+        # Insertar imagen en la zona segura
+        pagina.insert_image(rect_cuadrado_seguro, stream=bytes_qr)
 
     # 6. Guardar los cambios
     pdf_salida = BytesIO()
