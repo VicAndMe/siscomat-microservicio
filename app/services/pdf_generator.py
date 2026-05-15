@@ -42,41 +42,50 @@ def calcular_coordenadas_y_fuente_hoja(rect_placeholder, texto, ancho_pagina, fo
     
     return fitz.Point(inicio_x, inicio_y), fontsize_calculado
 
-def calcular_rectangulo_qr_seguro(rect_placeholder, ancho_pagina, alto_pagina, tamano_ideal=100):
+def calcular_rectangulo_qr_desplazado(rect_placeholder, ancho_pagina, alto_pagina, tamano_ideal=100):
     """
-    Calcula un rectángulo cuadrado perfecto centrado en el placeholder original.
-    Si está muy cerca de cualquier margen, reduce su tamaño proporcionalmente.
+    Calcula un rectángulo cuadrado perfecto (100x100).
+    Intenta centrarlo en el placeholder original, pero si choca con los márgenes,
+    lo "desliza" hacia adentro de la hoja para mantener su tamaño intacto sin cortarse.
     """
     margen_seguridad = 60
+    mitad = tamano_ideal / 2.0
     
-    # 1. Encontrar el centro absoluto del placeholder
+    # 1. Encontrar el centro original dictado por la etiqueta
     centro_x = (rect_placeholder.x0 + rect_placeholder.x1) / 2.0
     centro_y = (rect_placeholder.y0 + rect_placeholder.y1) / 2.0
     
-    # 2. Medir distancia a los bordes horizontales (Izquierda y Derecha)
-    distancia_izq = centro_x - margen_seguridad
-    distancia_der = (ancho_pagina - margen_seguridad) - centro_x
-    distancia_x_segura = min(distancia_izq, distancia_der)
+    # 2. Crear las coordenadas iniciales del QR ideal (100x100)
+    x0 = centro_x - mitad
+    x1 = centro_x + mitad
+    y0 = centro_y - mitad
+    y1 = centro_y + mitad
     
-    # 3. Medir distancia a los bordes verticales (Arriba y Abajo)
-    distancia_arriba = centro_y - margen_seguridad
-    distancia_abajo = (alto_pagina - margen_seguridad) - centro_y
-    distancia_y_segura = min(distancia_arriba, distancia_abajo)
-    
-    # 4. El tamaño máximo seguro es el doble de la distancia más restrictiva
-    tamano_maximo = max(2 * min(distancia_x_segura, distancia_y_segura), 20) # Mínimo 20x20
-    
-    # 5. Elegimos el tamaño final (ideal o el máximo permitido, el que sea menor)
-    tamano_final = min(tamano_ideal, tamano_maximo)
-    
-    # 6. Construir el nuevo rectángulo matemático perfectamente centrado
-    mitad = tamano_final / 2.0
-    return fitz.Rect(
-        centro_x - mitad,
-        centro_y - mitad,
-        centro_x + mitad,
-        centro_y + mitad
-    )
+    # 3. Deslizamiento Horizontal (Proteger Eje X)
+    if x0 < margen_seguridad:
+        # Está chocando con el margen izquierdo -> Lo empujamos a la derecha
+        desplazamiento = margen_seguridad - x0
+        x0 += desplazamiento
+        x1 += desplazamiento
+    elif x1 > (ancho_pagina - margen_seguridad):
+        # Está chocando con el margen derecho -> Lo empujamos a la izquierda
+        desplazamiento = x1 - (ancho_pagina - margen_seguridad)
+        x0 -= desplazamiento
+        x1 -= desplazamiento
+        
+    # 4. Deslizamiento Vertical (Proteger Eje Y)
+    if y0 < margen_seguridad:
+        # Está chocando con el margen superior -> Lo empujamos hacia abajo
+        desplazamiento = margen_seguridad - y0
+        y0 += desplazamiento
+        y1 += desplazamiento
+    elif y1 > (alto_pagina - margen_seguridad):
+        # Está chocando con el margen inferior -> Lo empujamos hacia arriba
+        desplazamiento = y1 - (alto_pagina - margen_seguridad)
+        y0 -= desplazamiento
+        y1 -= desplazamiento
+        
+    return fitz.Rect(x0, y0, x1, y1)
 
 def validar_plantilla(plantilla_bytes: bytes) -> dict:
     documento = fitz.open(stream=plantilla_bytes, filetype="pdf")
@@ -134,18 +143,16 @@ def procesar_pdf(nombre: str, curso: str, url_validacion: str, plantilla_bytes: 
         punto_insercion, fontsize_dinamico = calcular_coordenadas_y_fuente_hoja(rect_curso, curso, ancho_pagina, base_fontsize=18)
         pagina.insert_text(punto_insercion, curso, fontsize=fontsize_dinamico, fontname="helv", color=(0, 0, 0))
 
-    # 5. Estampar el Código QR con protección geométrica
+    # 5. Estampar el Código QR con protección de deslizamiento
     coordenadas_qr = pagina.search_for("{{QR}}")
     if coordenadas_qr:
         rect_qr = coordenadas_qr[0]
-        # Borrar el texto de la etiqueta
         pagina.draw_rect(rect_qr, color=(1, 1, 1), fill=(1, 1, 1))
         
-        # Calcular el rectángulo seguro y centrado
         alto_pagina = pagina.rect.height
-        rect_cuadrado_seguro = calcular_rectangulo_qr_seguro(rect_qr, ancho_pagina, alto_pagina, tamano_ideal=100)
+        # Llama a la nueva función de deslizamiento
+        rect_cuadrado_seguro = calcular_rectangulo_qr_desplazado(rect_qr, ancho_pagina, alto_pagina, tamano_ideal=100)
         
-        # Insertar imagen en la zona segura
         pagina.insert_image(rect_cuadrado_seguro, stream=bytes_qr)
 
     # 6. Guardar los cambios
